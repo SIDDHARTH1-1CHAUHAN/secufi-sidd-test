@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
+import { DebitCardShowcase } from '@/src/components/domain/DebitCardShowcase';
 import { TaskCard, RiskCard } from '@/src/components/domain/RiskCard';
 import { PrimaryCTA, SecondaryCTA } from '@/src/components/primitives/Buttons';
 import { AppScreen } from '@/src/components/primitives/AppScreen';
@@ -59,6 +60,11 @@ export function HomeScreen() {
           />
         </View>
       </HeroCard>
+
+      <ContentCard>
+        <SectionHeader eyebrow="Access" title="Household card" actionLabel="Open vault" onPressAction={() => router.push('/(tabs)/vault')} />
+        <DebitCardShowcase onActionPress={(action) => showToast(`${action} flow can route into Copilot or Vault next`)} />
+      </ContentCard>
 
       <Pressable
         style={[styles.askBar, { backgroundColor: theme.colors.surfaceGlass, borderColor: theme.colors.border }]}

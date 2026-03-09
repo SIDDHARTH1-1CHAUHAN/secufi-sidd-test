@@ -18,6 +18,7 @@ import {
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
 
+import { AgentLauncher } from '@/src/components/overlays/AgentLauncher';
 import { AppProviders, useAppTheme } from '@/src/lib/providers/AppProviders';
 
 void SplashScreen.preventAutoHideAsync();
@@ -26,12 +27,12 @@ const navigationTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: '#08111A',
-    card: '#0D1823',
-    border: '#1B2A39',
-    primary: '#7DA9FF',
-    text: '#F5EFE1',
-    notification: '#F18E94',
+    background: '#030604',
+    card: '#08100B',
+    border: '#17241B',
+    primary: '#79D89C',
+    text: '#F2F4EE',
+    notification: '#EA8C93',
   },
 };
 
@@ -54,6 +55,7 @@ function Navigator() {
         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
         <Stack.Screen name="onboarding" options={{ presentation: 'modal' }} />
       </Stack>
+      <AgentLauncher />
     </ThemeProvider>
   );
 }
