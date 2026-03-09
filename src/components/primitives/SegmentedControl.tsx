@@ -21,7 +21,10 @@ export function SegmentedControl<T extends string>({
           <Pressable
             key={item}
             onPress={() => onChange(item)}
-            style={[styles.item, { borderColor: theme.colors.border }, active && { backgroundColor: theme.colors.blueSoft }]}>
+            style={[
+              styles.item,
+              { borderColor: active ? theme.colors.borderStrong : theme.colors.border, backgroundColor: active ? theme.colors.surfaceRaised : theme.colors.canvasMuted },
+            ]}>
             <Text style={[styles.text, { color: active ? theme.colors.text : theme.colors.textSecondary }]}>{item}</Text>
           </Pressable>
         );

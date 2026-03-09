@@ -1,12 +1,24 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { WillStepper } from '@/src/components/domain/WillStepper';
 import { AppScreen } from '@/src/components/primitives/AppScreen';
 import { ContentCard, HeroCard } from '@/src/components/primitives/Panels';
 import { PrimaryCTA, SecondaryCTA } from '@/src/components/primitives/Buttons';
+import { StatusChip } from '@/src/components/primitives/StatusChip';
 import { useAppTheme, useHousehold, useWillDraft } from '@/src/lib/providers/AppProviders';
+
+function SummaryCard({ title, body, tone = 'blue' }: { title: string; body: string; tone?: 'blue' | 'amber' | 'rose' | 'mint' }) {
+  const theme = useAppTheme();
+  return (
+    <ContentCard style={[styles.summaryCard, { backgroundColor: theme.colors.surfaceRaised }]}> 
+      <StatusChip label={title} tone={tone} />
+      <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{body}</Text>
+    </ContentCard>
+  );
+}
 
 export function WillIntroScreen() {
   const theme = useAppTheme();
@@ -17,16 +29,19 @@ export function WillIntroScreen() {
     <AppScreen>
       <WillStepper active={0} />
       <HeroCard>
-        <Text style={[styles.headline, { color: theme.colors.text }]}>Build a will that matches the real household, not a cold legal form.</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>
-          Capture who depends on whom, which assets matter, and what still needs clarity before the draft is ready.
-        </Text>
+        <StatusChip label={draft?.coverage.stage === 'not_started' ? 'Not started' : 'In progress'} tone={draft?.coverage.stage === 'not_started' ? 'amber' : 'mint'} />
+        <Text style={[styles.headline, { color: theme.colors.text }]}>A guided family protection flow, not a legal-looking form.</Text>
+        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>Capture dependents, beneficiaries, executors, and important assets in a way that still feels calm and understandable.</Text>
         <PrimaryCTA label={draft?.coverage.stage === 'not_started' ? 'Start will' : 'Continue draft'} onPress={() => router.push('/will/people')} />
       </HeroCard>
+      <SummaryCard title="Coverage" tone="amber" body={snapshot?.will.coverage.summary ?? 'No household coverage yet'} />
       <ContentCard>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{snapshot?.will.coverage.summary}</Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>Still unresolved</Text>
         {snapshot?.will.coverage.unresolved.map((item) => (
-          <Text key={item} style={[styles.bullet, { color: theme.colors.textSecondary }]}>{`• ${item}`}</Text>
+          <View key={item} style={styles.bulletRow}>
+            <Ionicons name="ellipse" size={8} color={theme.colors.amber} />
+            <Text style={[styles.bullet, { color: theme.colors.textSecondary }]}>{item}</Text>
+          </View>
         ))}
       </ContentCard>
     </AppScreen>
@@ -49,13 +64,18 @@ export function WillPeopleScreen() {
     <AppScreen>
       <WillStepper active={1} />
       <HeroCard>
-        <Text style={[styles.headline, { color: theme.colors.text }]}>Choose who the draft should protect and who should act for the family.</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>Tap household members to include them as beneficiaries. Use the small actions below each card for executor and guardian roles.</Text>
+        <Text style={[styles.headline, { color: theme.colors.text }]}>Choose the people this draft should protect and who should act for the household.</Text>
+        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>Each tap updates the family instruction layer before the legal wording phase.</Text>
       </HeroCard>
       {snapshot.people.map((person) => (
         <ContentCard key={person.id}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>{person.name}</Text>
-          <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{person.role} • {person.relationTone}</Text>
+          <View style={styles.cardTop}>
+            <View style={styles.cardTopCopy}>
+              <Text style={[styles.title, { color: theme.colors.text }]}>{person.name}</Text>
+              <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{person.role} • {person.relationTone}</Text>
+            </View>
+            <StatusChip label={person.readiness === 'risk' ? 'Needs attention' : person.readiness === 'watch' ? 'Watch' : 'Connected'} tone={person.readiness === 'risk' ? 'rose' : person.readiness === 'watch' ? 'amber' : 'mint'} />
+          </View>
           <View style={styles.row}>
             <SecondaryCTA
               label={selected.has(person.id) ? 'Included' : 'Include'}
@@ -93,19 +113,20 @@ export function WillAssetsScreen() {
     <AppScreen>
       <WillStepper active={2} />
       <HeroCard>
-        <Text style={[styles.headline, { color: theme.colors.text }]}>Select the important assets that should clearly appear in the draft.</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>Assets missing here remain unclear in the estate summary and can create avoidable friction later.</Text>
+        <Text style={[styles.headline, { color: theme.colors.text }]}>Select the assets that should be unmistakably visible in the draft.</Text>
+        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>Missing assets create ambiguity later. This step keeps the estate summary usable on mobile.</Text>
       </HeroCard>
       {snapshot.assets.map((asset) => (
-        <Pressable
-          key={asset.id}
-          onPress={() => void saveDraft('assets', { assetIds: selected.has(asset.id) ? draft.assetIds.filter((id) => id !== asset.id) : [...draft.assetIds, asset.id] })}>
+        <Pressable key={asset.id} onPress={() => void saveDraft('assets', { assetIds: selected.has(asset.id) ? draft.assetIds.filter((id) => id !== asset.id) : [...draft.assetIds, asset.id] })}>
           <ContentCard>
-            <Text style={[styles.title, { color: theme.colors.text }]}>{asset.title}</Text>
-            <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{asset.type} • {asset.valueLabel}</Text>
-            <Text style={[styles.selection, { color: selected.has(asset.id) ? theme.colors.mint : theme.colors.textMuted }]}>
-              {selected.has(asset.id) ? 'Included in draft' : 'Tap to include'}
-            </Text>
+            <View style={styles.cardTop}>
+              <View style={styles.cardTopCopy}>
+                <Text style={[styles.title, { color: theme.colors.text }]}>{asset.title}</Text>
+                <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{asset.type} • {asset.valueLabel}</Text>
+              </View>
+              <StatusChip label={selected.has(asset.id) ? 'Included' : 'Review'} tone={selected.has(asset.id) ? 'mint' : 'amber'} />
+            </View>
+            <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{asset.highlights.join(' • ')}</Text>
           </ContentCard>
         </Pressable>
       ))}
@@ -131,15 +152,15 @@ export function WillDistributionScreen() {
     <AppScreen>
       <WillStepper active={3} />
       <HeroCard>
-        <Text style={[styles.headline, { color: theme.colors.text }]}>Choose the plain-English distribution intent the agent will review with you.</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>This is not the final legal wording. It is the household instruction layer.</Text>
+        <Text style={[styles.headline, { color: theme.colors.text }]}>Choose the plain-English intent the agent should carry into the draft review.</Text>
+        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>This is guidance for the family outcome, not final legal phrasing yet.</Text>
       </HeroCard>
       {options.map((option) => (
         <Pressable key={option} onPress={() => void saveDraft('distribution', { distributionSummary: option })}>
-          <ContentCard>
+          <ContentCard style={[draft.distributionSummary === option && { borderColor: theme.colors.borderStrong, backgroundColor: theme.colors.surfaceRaised }]}>
             <Text style={[styles.body, { color: theme.colors.text }]}>{option}</Text>
             <Text style={[styles.selection, { color: draft.distributionSummary === option ? theme.colors.mint : theme.colors.textMuted }]}>
-              {draft.distributionSummary === option ? 'Selected' : 'Tap to use'}
+              {draft.distributionSummary === option ? 'Selected for review' : 'Tap to use'}
             </Text>
           </ContentCard>
         </Pressable>
@@ -170,25 +191,20 @@ export function WillReviewScreen() {
     <AppScreen>
       <WillStepper active={4} />
       <HeroCard>
-        <Text style={[styles.headline, { color: theme.colors.text }]}>Review what the draft now covers.</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>You can still return to any section. The goal here is clarity, not legal final wording yet.</Text>
+        <StatusChip label="Draft review" tone="mint" />
+        <Text style={[styles.headline, { color: theme.colors.text }]}>Review what the draft now covers and what still needs a decision.</Text>
+        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>You can still step back into people, assets, or distribution before moving to legal finalization.</Text>
       </HeroCard>
-      <ContentCard>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Beneficiaries</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{beneficiaryNames}</Text>
-      </ContentCard>
-      <ContentCard>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Assets included</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{assetNames}</Text>
-      </ContentCard>
-      <ContentCard>
-        <Text style={[styles.title, { color: theme.colors.text }]}>Distribution intent</Text>
-        <Text style={[styles.body, { color: theme.colors.textSecondary }]}>{draft.distributionSummary || 'Not chosen yet'}</Text>
-      </ContentCard>
+      <SummaryCard title="Beneficiaries" body={beneficiaryNames} />
+      <SummaryCard title="Assets included" body={assetNames} tone="mint" />
+      <SummaryCard title="Distribution intent" body={draft.distributionSummary || 'Not chosen yet'} tone="amber" />
       <ContentCard>
         <Text style={[styles.title, { color: theme.colors.text }]}>Still unresolved</Text>
         {snapshot.will.coverage.unresolved.map((item) => (
-          <Text key={item} style={[styles.bullet, { color: theme.colors.textSecondary }]}>{`• ${item}`}</Text>
+          <View key={item} style={styles.bulletRow}>
+            <Ionicons name="ellipse" size={8} color={theme.colors.amber} />
+            <Text style={[styles.bullet, { color: theme.colors.textSecondary }]}>{item}</Text>
+          </View>
         ))}
       </ContentCard>
       <View style={styles.row}>
@@ -200,10 +216,14 @@ export function WillReviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  headline: { fontFamily: 'CormorantGaramond_600SemiBold', fontSize: 34, lineHeight: 36 },
+  headline: { fontFamily: 'CormorantGaramond_600SemiBold', fontSize: 36, lineHeight: 38 },
   body: { fontFamily: 'Manrope_500Medium', fontSize: 14, lineHeight: 22 },
   title: { fontFamily: 'CormorantGaramond_600SemiBold', fontSize: 26 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  bulletRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   bullet: { fontFamily: 'Manrope_500Medium', fontSize: 14, lineHeight: 22 },
   selection: { fontFamily: 'Manrope_700Bold', fontSize: 13 },
+  summaryCard: { gap: 10 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' },
+  cardTopCopy: { flex: 1, gap: 4 },
 });
