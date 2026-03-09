@@ -1,0 +1,41 @@
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { useAppTheme } from '@/src/lib/providers/AppProviders';
+
+const iconByRoute: Record<string, keyof typeof Ionicons.glyphMap> = {
+  home: 'home-outline',
+  household: 'git-network-outline',
+  copilot: 'sparkles-outline',
+  vault: 'folder-open-outline',
+};
+
+export function BottomNavBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const theme = useAppTheme();
+
+  return (
+    <View style={styles.frame}>
+      <BlurView intensity={30} tint="dark" style={[styles.container, { borderColor: theme.colors.border }]}> 
+        {state.routes.map((route, index) => {
+          const isFocused = state.index === index;
+          const label = descriptors[route.key].options.title ?? route.name;
+          return (
+            <Pressable key={route.key} onPress={() => navigation.navigate(route.name as never)} style={[styles.item, isFocused && { backgroundColor: theme.colors.blueSoft }]}>
+              <Ionicons name={iconByRoute[route.name] ?? 'ellipse-outline'} size={20} color={isFocused ? theme.colors.text : theme.colors.textMuted} />
+              <Text style={[styles.label, { color: isFocused ? theme.colors.text : theme.colors.textMuted }]}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </BlurView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  frame: { position: 'absolute', left: 18, right: 18, bottom: 24 },
+  container: { flexDirection: 'row', borderWidth: 1, borderRadius: 28, overflow: 'hidden', padding: 8, gap: 8 },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 20, paddingVertical: 10, gap: 4 },
+  label: { fontFamily: 'Manrope_600SemiBold', fontSize: 11 },
+});

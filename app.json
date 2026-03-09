@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "SecuFi",
+    "slug": "secufi-sidd-test",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "secufi",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.secufi.mobile"
+    },
+    "android": {
+      "package": "com.secufi.mobile",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

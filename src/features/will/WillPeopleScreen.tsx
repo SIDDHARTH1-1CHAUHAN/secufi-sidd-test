@@ -1,0 +1,1 @@
+export { WillPeopleScreen } from './WillScreens';
